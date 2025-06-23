@@ -12,7 +12,18 @@
       "name": "search",
       "title": "Drive File Search",
       "description": "Google Driveのファイルを曖昧検索",
-      "mode": "view"
+      "mode": "view",
+      "keywords": ["drive", "google", "search", "file", "fuzzy"],
+      "preferences": [
+        {
+          "name": "shortcut",
+          "type": "textfield",
+          "required": false,
+          "title": "Keyboard Shortcut",
+          "description": "キーボードショートカット (例: cmd+shift+d)",
+          "placeholder": "cmd+shift+d"
+        }
+      ]
     }
   ],
   "dependencies": {

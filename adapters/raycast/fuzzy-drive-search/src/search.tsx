@@ -181,11 +181,15 @@ export default function Command(): Element {
   };
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      performSearch(searchText);
-    }, 300);
+    if (searchText.trim()) {
+      const timeoutId = setTimeout(() => {
+        performSearch(searchText);
+      }, 300);
 
-    return () => clearTimeout(timeoutId);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setResults([]);
+    }
   }, [searchText]);
 
   return (
@@ -195,7 +199,7 @@ export default function Command(): Element {
       searchBarPlaceholder="Google Drive内のファイルを検索..."
       throttle
     >
-      {results.length === 0 && searchText.trim() === "" ? (
+      {searchText.trim() === "" ? (
         <List.Section title="操作">
           <List.Item
             title="初期設定"
@@ -218,7 +222,7 @@ export default function Command(): Element {
             }
           />
         </List.Section>
-      ) : (
+      ) : results.length > 0 ? (
         <List.Section title={`検索結果 (${results.length}件)`}>
           {results.map((item: SearchResult) => (
             <List.Item
@@ -249,7 +253,25 @@ export default function Command(): Element {
             />
           ))}
         </List.Section>
-      )}
+      ) : !isLoading ? (
+        <List.Section title="検索結果">
+          <List.Item
+            title="検索結果が見つかりません"
+            subtitle={`"${searchText}" に一致するファイルがありません`}
+            icon={Icon.MagnifyingGlass}
+            actions={
+              <ActionPanel>
+                <Action
+                  title="手動同期"
+                  icon={Icon.RotateClockwise}
+                  onAction={syncFiles}
+                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                />
+              </ActionPanel>
+            }
+          />
+        </List.Section>
+      ) : null}
     </List>
   );
 }
