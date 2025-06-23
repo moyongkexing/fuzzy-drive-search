@@ -27,8 +27,19 @@ impl SearchService {
     }
 
     pub async fn ensure_initialized(&self) -> Result<()> {
+        self.initialize_with_overrides(None, None).await
+    }
+
+    pub async fn initialize_with_overrides(
+        &self,
+        client_id_override: Option<String>,
+        client_secret_override: Option<String>
+    ) -> Result<()> {
         // 設定ファイルの初期化確認
-        let config = self.config_manager.setup_initial_config()?;
+        let config = self.config_manager.setup_initial_config_with_overrides(
+            client_id_override,
+            client_secret_override
+        )?;
         
         // 認証トークンの確認・取得
         self.ensure_authenticated(&config).await?;

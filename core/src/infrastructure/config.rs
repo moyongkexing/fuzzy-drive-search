@@ -89,9 +89,27 @@ impl ConfigManager {
     }
 
     pub fn setup_initial_config(&self) -> Result<AppConfig> {
+        self.setup_initial_config_with_overrides(None, None)
+    }
+
+    pub fn setup_initial_config_with_overrides(
+        &self, 
+        client_id_override: Option<String>,
+        client_secret_override: Option<String>
+    ) -> Result<AppConfig> {
         println!("初期設定を開始します。");
         
-        let config = self.load_config()?;
+        let mut config = self.load_config()?;
+
+        // コマンドライン引数からの上書き
+        if let Some(client_id) = client_id_override {
+            config.google_client_id = client_id;
+            println!("Client IDをコマンドライン引数から設定しました");
+        }
+        if let Some(client_secret) = client_secret_override {
+            config.google_client_secret = client_secret;
+            println!("Client Secretをコマンドライン引数から設定しました");
+        }
 
         // Google API認証情報の設定確認
         if config.google_client_id == "your_client_id_here" {

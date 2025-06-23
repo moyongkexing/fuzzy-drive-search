@@ -23,17 +23,13 @@ export default function InitForm() {
         message: "Google Drive認証を開始します",
       });
 
-      // 環境変数として設定値を渡す
-      const env = {
-        ...process.env,
-        GOOGLE_CLIENT_ID: values.clientId,
-        GOOGLE_CLIENT_SECRET: values.clientSecret,
-      };
-
-      execSync(`${binaryPath} init`, {
+      // コマンドライン引数として設定値を渡す
+      const escapedClientId = values.clientId.replace(/'/g, "'\"'\"'");
+      const escapedClientSecret = values.clientSecret.replace(/'/g, "'\"'\"'");
+      
+      execSync(`${binaryPath} init --client-id='${escapedClientId}' --client-secret='${escapedClientSecret}'`, {
         encoding: "utf8",
         timeout: 60_000,
-        env,
       });
 
       showToast({

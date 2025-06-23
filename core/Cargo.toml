@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 
+[[bin]]
+name = "fuzzy-drive-search"
+path = "src/main.rs"
+
 [dependencies]
 tokio.workspace = true
 serde.workspace = true

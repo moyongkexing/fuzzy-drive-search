@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "core",
-    "adapters/raycast"
 ]
 resolver = "2"
 
