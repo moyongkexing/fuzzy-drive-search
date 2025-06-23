@@ -1,3 +1,3 @@
-pub mod use_cases;
+pub mod search_service;
 
-pub use use_cases::*;
+pub use search_service::*;
