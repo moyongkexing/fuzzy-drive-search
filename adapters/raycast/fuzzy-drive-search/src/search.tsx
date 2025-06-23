@@ -1,7 +1,7 @@
 import { ActionPanel, Action, Icon, List, showToast, Toast } from "@raycast/api";
-import { useCachedPromise } from "@raycast/utils";
 import { execSync } from "child_process";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import InitForm from "./init-form";
 
 interface SearchResult {
   title: string;
@@ -26,6 +26,22 @@ const executeCommand = (command: string, options: { timeout?: number } = {}) => 
   return execSync(`${binaryPath} ${command}`, {
     encoding: "utf8",
     timeout: options.timeout || 10_000,
+  });
+};
+
+const executeCommandAsync = async (command: string, options: { timeout?: number } = {}) => {
+  return new Promise<string>((resolve, reject) => {
+    setTimeout(() => {
+      try {
+        const result = execSync(`${binaryPath} ${command}`, {
+          encoding: "utf8",
+          timeout: options.timeout || 10_000,
+        });
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    }, 0);
   });
 };
 
@@ -65,35 +81,36 @@ const getIconForMimeType = (filename: string) => {
 
 export default function Command() {
   const [searchText, setSearchText] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    data: results = [],
-    isLoading,
-    mutate,
-  } = useCachedPromise(
-    async (query: string) => {
-      if (!query.trim()) return [];
+  const performSearch = async (query: string) => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
 
-      try {
-        const escapedQuery = query.replace(/'/g, "'\"'\"'");
-        const output = executeCommand(`search '${escapedQuery}'`);
-        return parseSearchOutput(output);
-      } catch (error) {
-        showToast({
-          style: Toast.Style.Failure,
-          title: "検索エラー",
-          message: error instanceof Error ? error.message : "検索に失敗しました",
-        });
-        return [];
-      }
-    },
-    [searchText],
-    {
-      keepPreviousData: true,
-      execute: searchText.trim().length > 0,
-      failureToastOptions: { title: "検索エラー" },
-    },
-  );
+    setIsLoading(true);
+    try {
+      const escapedQuery = query.replace(/'/g, "'\"'\"'");
+      const output = executeCommand(`search '${escapedQuery}'`);
+      const searchResults = parseSearchOutput(output);
+      setResults(searchResults);
+    } catch (error) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "検索エラー",
+        message: error instanceof Error ? error.message : "検索に失敗しました",
+      });
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    performSearch(searchText);
+  }, [searchText]);
 
   const initialize = async () => {
     try {
@@ -103,7 +120,7 @@ export default function Command() {
         message: "Google Drive認証を開始します",
       });
 
-      executeCommand("init", { timeout: 60_000 });
+      await executeCommandAsync("init", { timeout: 60_000 });
 
       showToast({
         style: Toast.Style.Success,
@@ -127,7 +144,7 @@ export default function Command() {
         message: "Google Driveのファイル一覧を更新しています",
       });
 
-      executeCommand("sync", { timeout: 30_000 });
+      await executeCommandAsync("sync", { timeout: 30_000 });
 
       showToast({
         style: Toast.Style.Success,
@@ -135,7 +152,9 @@ export default function Command() {
         message: "ファイル一覧を更新しました",
       });
 
-      mutate();
+      if (searchText.trim()) {
+        performSearch(searchText);
+      }
     } catch (error) {
       showToast({
         style: Toast.Style.Failure,
@@ -160,7 +179,13 @@ export default function Command() {
             icon={Icon.Gear}
             actions={
               <ActionPanel>
-                <Action title="初期設定を実行" icon={Icon.Gear} onAction={initialize} />
+                <Action.Push title="初期設定フォームを開く" icon={Icon.Gear} target={<InitForm />} />
+                <Action
+                  title="既存の設定で初期化"
+                  icon={Icon.ArrowClockwise}
+                  onAction={initialize}
+                  shortcut={{ modifiers: ["cmd"], key: "i" }}
+                />
               </ActionPanel>
             }
           />
