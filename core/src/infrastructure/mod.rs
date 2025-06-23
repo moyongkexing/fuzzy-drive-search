@@ -1,1 +1,3 @@
-// インフラストラクチャ層の実装は後で追加
+pub mod drive_client;
+
+pub use drive_client::*;

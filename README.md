@@ -51,6 +51,18 @@ adapters/
 
 ## テスト実行
 
+**通常のテスト:**
 ```bash
 cargo test
 ```
+
+**Google Drive API疎通テスト（実際のAPIを使用）:**
+```bash
+# 環境変数にアクセストークンを設定
+export GOOGLE_ACCESS_TOKEN="your_access_token_here"
+
+# 疎通テストを実行
+cargo test --ignored
+```
+
+**注意:** 疎通テストには有効なGoogle Drive APIアクセストークンが必要です。
