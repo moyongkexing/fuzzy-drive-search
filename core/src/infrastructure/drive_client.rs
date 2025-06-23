@@ -155,7 +155,7 @@ impl GoogleDriveClient {
         Ok(response.status().is_success())
     }
     
-    pub async fn get_folder_info(&self, folder_id: &str) -> Result<()> {
+    pub async fn get_folder_info(&self, folder_id: &str) -> Result<String> {
         let response = self
             .client
             .get(&format!("https://www.googleapis.com/drive/v3/files/{}", folder_id))
@@ -175,7 +175,7 @@ impl GoogleDriveClient {
 
         let folder_info = response.text().await?;
         println!("フォルダ情報: {}", folder_info);
-        Ok(())
+        Ok(folder_info)
     }
 }
 

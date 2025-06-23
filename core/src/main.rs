@@ -124,12 +124,19 @@ async fn handle_search(query: &str) -> anyhow::Result<()> {
     let service = SearchService::new()?;
     
     let results = service.search(query)?;
+    let folder_names = service.get_folder_names().unwrap_or_default();
     
     // Raycast形式でJSON出力
     let items: Vec<serde_json::Value> = results.into_iter().map(|result| {
+        // 親フォルダ名を取得（複数の場合は最初のもの）
+        let parent_folder_name = result.file.parents.first()
+            .and_then(|parent_id| folder_names.get(parent_id))
+            .cloned()
+            .unwrap_or_else(|| "不明なフォルダ".to_string());
+        
         serde_json::json!({
             "title": result.file.name,
-            "subtitle": result.file.web_view_link.clone(),
+            "subtitle": parent_folder_name,
             "arg": result.file.web_view_link,
             "uid": result.file.id,
             "valid": true

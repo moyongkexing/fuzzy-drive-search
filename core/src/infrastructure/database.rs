@@ -40,6 +40,14 @@ impl Database {
             [],
         )?;
 
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS folders (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL
+            )",
+            [],
+        )?;
+
         // 検索用のインデックスを作成
         self.conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_file_name ON drive_files(name)",
@@ -180,5 +188,36 @@ impl Database {
         let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM drive_files")?;
         let count: i64 = stmt.query_row([], |row| row.get(0))?;
         Ok(count as usize)
+    }
+
+    pub fn save_folder_names(&self, folder_names: &std::collections::HashMap<String, String>) -> Result<()> {
+        let tx = self.conn.unchecked_transaction()?;
+        
+        tx.execute("DELETE FROM folders", [])?;
+        
+        for (folder_id, folder_name) in folder_names {
+            tx.execute(
+                "INSERT INTO folders (id, name) VALUES (?1, ?2)",
+                params![folder_id, folder_name],
+            )?;
+        }
+        
+        tx.commit()?;
+        Ok(())
+    }
+    
+    pub fn get_folder_names(&self) -> Result<std::collections::HashMap<String, String>> {
+        let mut stmt = self.conn.prepare("SELECT id, name FROM folders")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        
+        let mut folder_names = std::collections::HashMap::new();
+        for row in rows {
+            let (id, name) = row?;
+            folder_names.insert(id, name);
+        }
+        
+        Ok(folder_names)
     }
 }

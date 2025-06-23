@@ -129,8 +129,12 @@ impl SearchService {
             all_files.push(file);
         }
 
+        // フォルダ名を取得してデータベースに保存
+        let folder_names = self.fetch_folder_names_for_sync(&drive_client, &config.target_folder_ids).await?;
+        
         // データベースに保存
         self.database.save_files(&all_files)?;
+        self.database.save_folder_names(&folder_names)?;
         self.database.save_sync_info(None)?;
 
         println!("同期が完了しました。{}件のファイルを取得しました", all_files.len());
@@ -143,6 +147,26 @@ impl SearchService {
         
         println!("検索「{}」: {}件の結果", query, results.len());
         Ok(results)
+    }
+
+    pub fn get_folder_names(&self) -> Result<std::collections::HashMap<String, String>> {
+        self.database.get_folder_names()
+    }
+
+    async fn fetch_folder_names_for_sync(&self, drive_client: &GoogleDriveClient, folder_ids: &[String]) -> Result<std::collections::HashMap<String, String>> {
+        let mut folder_names = std::collections::HashMap::new();
+        
+        for folder_id in folder_ids {
+            if let Ok(folder_info) = drive_client.get_folder_info(folder_id).await {
+                if let Ok(folder_data) = serde_json::from_str::<serde_json::Value>(&folder_info) {
+                    if let Some(name) = folder_data["name"].as_str() {
+                        folder_names.insert(folder_id.clone(), name.to_string());
+                    }
+                }
+            }
+        }
+        
+        Ok(folder_names)
     }
 
     pub async fn check_and_sync(&self) -> Result<()> {
