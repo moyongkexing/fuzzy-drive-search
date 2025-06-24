@@ -1,8 +1,8 @@
 import { showToast, Toast } from "@raycast/api";
 import { execSync } from "child_process";
+import { join } from "path";
 
-const binaryPath =
-  "/Users/suenagakatsuyuki/Documents/claude-desktop/fuzzy-drive-search/target/release/fuzzy-drive-search";
+const binaryPath = join(__dirname, "../../../bin/fuzzy-drive-search");
 
 const executeCommandAsync = async (command: string, options: { timeout?: number } = {}) => {
   return new Promise<string>((resolve, reject) => {
