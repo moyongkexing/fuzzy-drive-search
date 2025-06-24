@@ -1,65 +1,8 @@
-import { ActionPanel, Action, Icon, List, showToast, Toast } from "@raycast/api";
-import { execSync } from "child_process";
-import { useState, useEffect } from "react";
+import { ActionPanel, Action, Icon, List } from "@raycast/api";
 import InitForm from "./init-form";
-
-interface SearchResult {
-  title: string;
-  subtitle: string;
-  arg: string;
-  uid: string;
-  valid: boolean;
-  icon?: {
-    type: string;
-    path: string;
-  };
-}
-
-interface SearchResults {
-  items: SearchResult[];
-}
-
-const binaryPath =
-  "/Users/suenagakatsuyuki/Documents/claude-desktop/fuzzy-drive-search/target/release/fuzzy-drive-search";
-
-const executeCommand = (command: string, options: { timeout?: number } = {}) => {
-  return execSync(`${binaryPath} ${command}`, {
-    encoding: "utf8",
-    timeout: options.timeout || 10_000,
-  });
-};
-
-const executeCommandAsync = async (command: string, options: { timeout?: number } = {}) => {
-  return new Promise<string>((resolve, reject) => {
-    setTimeout(() => {
-      try {
-        const result = execSync(`${binaryPath} ${command}`, {
-          encoding: "utf8",
-          timeout: options.timeout || 10_000,
-        });
-        resolve(result);
-      } catch (error) {
-        reject(error);
-      }
-    }, 0);
-  });
-};
-
-const parseSearchOutput = (output: string): SearchResult[] => {
-  if (!output.trim()) return [];
-
-  try {
-    const jsonStart = output.indexOf("{");
-    if (jsonStart === -1) return [];
-
-    const jsonPart = output.substring(jsonStart);
-    const results: SearchResults = JSON.parse(jsonPart);
-    return results.items || [];
-  } catch (error) {
-    console.error("JSON解析エラー:", error);
-    return [];
-  }
-};
+import { useSearch } from "./hooks/useSearch";
+import { useInitialization } from "./hooks/useInitialization";
+import { useSync } from "./hooks/useSync";
 
 const getIconForMimeType = (filename: string) => {
   const ext = filename.split(".").pop()?.toLowerCase() || "";
@@ -80,96 +23,22 @@ const getIconForMimeType = (filename: string) => {
 };
 
 export default function Command() {
-  const [searchText, setSearchText] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { searchText, setSearchText, results, isLoading, refreshSearch } = useSearch();
+  const { initialize } = useInitialization();
+  const { syncFiles } = useSync();
 
-  const performSearch = async (query: string) => {
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const escapedQuery = query.replace(/'/g, "'\"'\"'");
-      const output = executeCommand(`search '${escapedQuery}'`);
-      const searchResults = parseSearchOutput(output);
-      setResults(searchResults);
-    } catch (error) {
-      showToast({
-        style: Toast.Style.Failure,
-        title: "検索エラー",
-        message: error instanceof Error ? error.message : "検索に失敗しました",
-      });
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    performSearch(searchText);
-  }, [searchText]);
-
-  const initialize = async () => {
-    try {
-      showToast({
-        style: Toast.Style.Animated,
-        title: "初期化中...",
-        message: "Google Drive認証を開始します",
-      });
-
-      await executeCommandAsync("init", { timeout: 60_000 });
-
-      showToast({
-        style: Toast.Style.Success,
-        title: "初期化完了",
-        message: "Google Drive認証が完了しました",
-      });
-    } catch (error) {
-      showToast({
-        style: Toast.Style.Failure,
-        title: "初期化エラー",
-        message: error instanceof Error ? error.message : "初期化に失敗しました",
-      });
-    }
-  };
-
-  const syncFiles = async () => {
-    try {
-      showToast({
-        style: Toast.Style.Animated,
-        title: "同期中...",
-        message: "Google Driveのファイル一覧を更新しています",
-      });
-
-      await executeCommandAsync("sync", { timeout: 30_000 });
-
-      showToast({
-        style: Toast.Style.Success,
-        title: "同期完了",
-        message: "ファイル一覧を更新しました",
-      });
-
-      if (searchText.trim()) {
-        performSearch(searchText);
-      }
-    } catch (error) {
-      showToast({
-        style: Toast.Style.Failure,
-        title: "同期エラー",
-        message: error instanceof Error ? error.message : "同期に失敗しました",
-      });
-    }
+  const handleSync = () => {
+    syncFiles(refreshSearch);
   };
 
   return (
     <List
       isLoading={isLoading}
       searchBarPlaceholder="Google Drive内のファイルを検索..."
+      searchText={searchText}
       onSearchTextChange={setSearchText}
       throttle={false}
+      filtering={false}
     >
       {results.length === 0 && searchText.trim() === "" ? (
         <List.Section title="操作">
@@ -195,7 +64,7 @@ export default function Command() {
             icon={Icon.RotateClockwise}
             actions={
               <ActionPanel>
-                <Action title="同期を実行" icon={Icon.RotateClockwise} onAction={syncFiles} />
+                <Action title="同期を実行" icon={Icon.RotateClockwise} onAction={handleSync} />
               </ActionPanel>
             }
           />
@@ -215,7 +84,7 @@ export default function Command() {
                   <Action
                     title="手動同期"
                     icon={Icon.RotateClockwise}
-                    onAction={syncFiles}
+                    onAction={handleSync}
                     shortcut={{ modifiers: ["cmd"], key: "r" }}
                   />
                 </ActionPanel>

@@ -74,7 +74,7 @@ async fn handle_init(args: &[String]) -> anyhow::Result<()> {
     println!("Fuzzy Drive Search の初期化を開始します...");
     
     let (client_id, client_secret) = parse_auth_args(args)?;
-    let service = SearchService::new()?;
+    let mut service = SearchService::new()?;
     
     if client_id.is_some() || client_secret.is_some() {
         service.initialize_with_overrides(client_id, client_secret).await?;
@@ -152,7 +152,7 @@ async fn handle_search(query: &str) -> anyhow::Result<()> {
 }
 
 async fn handle_sync() -> anyhow::Result<()> {
-    let service = SearchService::new()?;
+    let mut service = SearchService::new()?;
     service.sync_files().await?;
     println!("同期が完了しました");
     Ok(())

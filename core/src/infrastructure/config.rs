@@ -24,7 +24,7 @@ impl Default for AppConfig {
 }
 
 pub struct ConfigManager {
-    config_dir: PathBuf,
+    pub config_dir: PathBuf,
 }
 
 impl ConfigManager {
@@ -86,6 +86,10 @@ impl ConfigManager {
 
     pub fn get_database_path(&self) -> PathBuf {
         self.config_dir.join("search_index.db")
+    }
+
+    pub fn get_cache_path(&self) -> PathBuf {
+        self.config_dir.join("files_cache.json")
     }
 
     pub fn setup_initial_config(&self) -> Result<AppConfig> {

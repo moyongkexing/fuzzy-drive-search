@@ -3,39 +3,35 @@ use chrono::{Duration, Utc};
 
 use crate::domain::entities::SearchResult;
 use crate::infrastructure::{
-    ConfigManager, JsonStorage, FuzzySearchEngine, GoogleDriveClient, OAuth2Client,
+    ConfigManager, Database, FuzzySearchEngine, GoogleDriveClient, OAuth2Client,
 };
 
 pub struct SearchService {
     config_manager: ConfigManager,
-    json_storage: JsonStorage,
+    database: Database,
     fuzzy_engine: FuzzySearchEngine,
 }
 
 impl SearchService {
     pub fn new() -> Result<Self> {
         let config_manager = ConfigManager::new()?;
-        
-        // JSONストレージのパスを設定
-        let storage_path = config_manager.config_dir.join("drive_files.json");
-        let cache_path = config_manager.get_cache_path();
-        let json_storage = JsonStorage::new(storage_path, cache_path)?;
-        
+        let db_path = config_manager.get_database_path();
+        let database = Database::new(db_path)?;
         let fuzzy_engine = FuzzySearchEngine::new(0.3); // 閾値30%
 
         Ok(Self {
             config_manager,
-            json_storage,
+            database,
             fuzzy_engine,
         })
     }
 
-    pub async fn ensure_initialized(&mut self) -> Result<()> {
+    pub async fn ensure_initialized(&self) -> Result<()> {
         self.initialize_with_overrides(None, None).await
     }
 
     pub async fn initialize_with_overrides(
-        &mut self,
+        &self,
         client_id_override: Option<String>,
         client_secret_override: Option<String>
     ) -> Result<()> {
@@ -48,13 +44,13 @@ impl SearchService {
         // 認証トークンの確認・取得
         self.ensure_authenticated(&config).await?;
         
-        // JSONストレージの初期化確認
-        let file_count = self.json_storage.get_file_count()?;
+        // データベースの初期化確認
+        let file_count = self.database.get_file_count()?;
         if file_count == 0 {
             println!("初回同期を実行します...");
             self.sync_files().await?;
         } else {
-            println!("ストレージに{}件のファイルがあります", file_count);
+            println!("データベースに{}件のファイルがあります", file_count);
         }
 
         Ok(())
@@ -95,7 +91,7 @@ impl SearchService {
         Ok(())
     }
 
-    pub async fn sync_files(&mut self) -> Result<()> {
+    pub async fn sync_files(&self) -> Result<()> {
         let config = self.config_manager.load_config()?;
         if config.target_folder_ids.is_empty() {
             return Err(anyhow::anyhow!("検索対象フォルダIDが設定されていません"));
@@ -133,18 +129,23 @@ impl SearchService {
             all_files.push(file);
         }
 
-        // フォルダ名を取得
+        // フォルダ名を取得してデータベースに保存
         let folder_names = self.fetch_folder_names_for_sync(&drive_client, &config.target_folder_ids).await?;
         
-        // JSONストレージに保存
-        self.json_storage.save_data(&all_files, &folder_names, None)?;
+        // データベースに保存
+        self.database.save_files(&all_files)?;
+        self.database.save_folder_names(&folder_names)?;
+        self.database.save_sync_info(None)?;
+
+        // JSON出力用のファイル情報を作成
+        self.export_files_to_json(&all_files, &folder_names)?;
 
         println!("同期が完了しました。{}件のファイルを取得しました", all_files.len());
         Ok(())
     }
 
     pub fn search(&self, query: &str) -> Result<Vec<SearchResult>> {
-        let files = self.json_storage.get_files()?;
+        let files = self.database.get_all_files()?;
         let results = self.fuzzy_engine.search(query, &files);
         
         println!("検索「{}」: {}件の結果", query, results.len());
@@ -152,7 +153,7 @@ impl SearchService {
     }
 
     pub fn get_folder_names(&self) -> Result<std::collections::HashMap<String, String>> {
-        self.json_storage.get_folder_names()
+        self.database.get_folder_names()
     }
 
     async fn fetch_folder_names_for_sync(&self, drive_client: &GoogleDriveClient, folder_ids: &[String]) -> Result<std::collections::HashMap<String, String>> {
@@ -171,9 +172,51 @@ impl SearchService {
         Ok(folder_names)
     }
 
-    pub async fn check_and_sync(&mut self) -> Result<()> {
+    fn export_files_to_json(&self, files: &[crate::domain::entities::DriveFile], folder_names: &std::collections::HashMap<String, String>) -> Result<()> {
+        use std::fs;
+        use serde_json;
+        
+        #[derive(serde::Serialize)]
+        struct ExportFile {
+            id: String,
+            name: String,
+            web_view_link: String,
+            mime_type: String,
+            parents: Vec<String>,
+            parent_folder_name: String,
+        }
+        
+        let export_files: Vec<ExportFile> = files.iter().map(|file| {
+            let parent_folder_name = file.parents.first()
+                .and_then(|parent_id| folder_names.get(parent_id))
+                .cloned()
+                .unwrap_or_else(|| "不明なフォルダ".to_string());
+            
+            ExportFile {
+                id: file.id.clone(),
+                name: file.name.clone(),
+                web_view_link: file.web_view_link.clone(),
+                mime_type: file.mime_type.clone(),
+                parents: file.parents.clone(),
+                parent_folder_name,
+            }
+        }).collect();
+        
+        let export_data = serde_json::json!({
+            "files": export_files,
+            "last_updated": chrono::Utc::now().to_rfc3339()
+        });
+        
+        let cache_path = self.config_manager.get_cache_path();
+        fs::write(cache_path, serde_json::to_string_pretty(&export_data)?)?;
+        
+        println!("ファイル情報をJSONに出力しました");
+        Ok(())
+    }
+
+    pub async fn check_and_sync(&self) -> Result<()> {
         // 最後の同期から1時間以上経過している場合のみ同期
-        if let Some((last_sync, _)) = self.json_storage.get_sync_info()? {
+        if let Some((last_sync, _)) = self.database.get_sync_info()? {
             let now = Utc::now();
             let sync_interval = Duration::hours(1);
             

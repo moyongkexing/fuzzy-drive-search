@@ -20,7 +20,7 @@ reqwest = { version = "0.12", features = ["json"] }
 url = "2.5"
 dirs = "5.0"
 toml = "0.8"
-rusqlite = { version = "0.31", features = ["bundled"] }
 skim = "0.10"
 base64 = "0.22"
 open = "5.0"
+# lindera = { version = "0.33.0", features = ["ipadic"] }
