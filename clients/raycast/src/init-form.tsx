@@ -1,14 +1,14 @@
 import { Action, ActionPanel, Form, showToast, Toast, popToRoot } from "@raycast/api";
 import { useState } from "react";
 import { execSync } from "child_process";
+import { join } from "path";
 
 interface FormValues {
   clientId: string;
   clientSecret: string;
 }
 
-const binaryPath =
-  "/Users/suenagakatsuyuki/Documents/claude-desktop/fuzzy-drive-search/target/release/fuzzy-drive-search";
+const binaryPath = join(__dirname, "../../../bin/fuzzy-drive-search");
 
 export default function InitForm() {
   const [isLoading, setIsLoading] = useState(false);
