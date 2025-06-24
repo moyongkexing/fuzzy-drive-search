@@ -77,7 +77,7 @@ export default function Command() {
             icon={Icon.Folder}
             actions={
               <ActionPanel>
-                <Action.Push title="同期フォームを開く" icon={Icon.FolderOpen} target={<SyncForm />} />
+                <Action.Push title="同期フォームを開く" icon={Icon.Folder} target={<SyncForm />} />
                 <Action title="簡易同期" icon={Icon.RotateClockwise} onAction={handleSync} />
               </ActionPanel>
             }

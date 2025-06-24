@@ -29,6 +29,13 @@
           "placeholder": "cmd+shift+d"
         }
       ]
+    },
+    {
+      "name": "background-sync",
+      "title": "Background Sync",
+      "description": "バックグラウンドでGoogle Driveファイルを定期同期",
+      "mode": "no-view",
+      "interval": "1h"
     }
   ],
   "dependencies": {
