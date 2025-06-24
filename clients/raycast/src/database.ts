@@ -13,30 +13,32 @@ interface DriveFile {
   romaji_keywords?: string[];
 }
 
-interface CacheData {
+interface DriveStorageData {
   files: DriveFile[];
-  last_updated: string;
+  folders: Record<string, string>;
+  last_sync: string;
+  sync_token?: string;
 }
 
 let cachedFiles: DriveFile[] = [];
 let lastLoadTime = 0;
 
 function loadCacheFromJson(): void {
-  const cachePath = join(homedir(), "Library", "Application Support", "fuzzy-drive-search", "files_cache.json");
+  const storagePath = join(homedir(), "Library", "Application Support", "fuzzy-drive-search", "drive_files.json");
 
   try {
-    if (!existsSync(cachePath)) {
-      console.warn("JSONキャッシュファイルが見つかりません:", cachePath);
+    if (!existsSync(storagePath)) {
+      console.warn("JSONストレージファイルが見つかりません:", storagePath);
       return;
     }
 
-    const content = readFileSync(cachePath, "utf8");
-    const cacheData: CacheData = JSON.parse(content);
+    const content = readFileSync(storagePath, "utf8");
+    const storageData: DriveStorageData = JSON.parse(content);
 
-    cachedFiles = cacheData.files;
+    cachedFiles = storageData.files;
     lastLoadTime = Date.now();
   } catch (error) {
-    console.error("JSONキャッシュ読み込みエラー:", error);
+    console.error("JSONストレージ読み込みエラー:", error);
   }
 }
 

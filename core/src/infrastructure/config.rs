@@ -85,9 +85,6 @@ impl ConfigManager {
     }
 
 
-    pub fn get_cache_path(&self) -> PathBuf {
-        self.config_dir.join("files_cache.json")
-    }
 
     pub fn setup_initial_config(&self) -> Result<AppConfig> {
         self.setup_initial_config_with_overrides(None, None)

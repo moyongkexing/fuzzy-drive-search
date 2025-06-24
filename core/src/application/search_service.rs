@@ -18,8 +18,7 @@ impl SearchService {
         
         // JSONストレージのパスを設定
         let storage_path = config_manager.config_dir.join("drive_files.json");
-        let cache_path = config_manager.get_cache_path();
-        let json_storage = JsonStorage::new(storage_path, cache_path)?;
+        let json_storage = JsonStorage::new(storage_path)?;
         
         let fuzzy_engine = FuzzySearchEngine::new(0.3); // 閾値30%
 

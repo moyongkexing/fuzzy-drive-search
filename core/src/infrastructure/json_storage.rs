@@ -30,21 +30,16 @@ pub struct JsonStorageData {
 
 pub struct JsonStorage {
     storage_path: PathBuf,
-    cache_path: PathBuf,
 }
 
 impl JsonStorage {
-    pub fn new(storage_path: PathBuf, cache_path: PathBuf) -> Result<Self> {
+    pub fn new(storage_path: PathBuf) -> Result<Self> {
         if let Some(parent) = storage_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        if let Some(parent) = cache_path.parent() {
             fs::create_dir_all(parent)?;
         }
 
         Ok(Self {
             storage_path,
-            cache_path,
         })
     }
 
@@ -86,8 +81,6 @@ impl JsonStorage {
 
         let json_data = serde_json::to_string_pretty(&storage_data)?;
         fs::write(&self.storage_path, json_data)?;
-
-        self.export_cache(&storage_data)?;
 
         println!("JSONストレージに{}件のファイルを保存しました", files.len());
         Ok(())
@@ -296,39 +289,4 @@ impl JsonStorage {
         romaji_parts
     }
 
-    fn export_cache(&self, data: &JsonStorageData) -> Result<()> {
-        #[derive(Serialize)]
-        struct CacheFile {
-            id: String,
-            name: String,
-            web_view_link: String,
-            mime_type: String,
-            parents: Vec<String>,
-            parent_folder_name: String,
-            keywords: Vec<String>,
-            romaji_keywords: Vec<String>,
-        }
-
-        let cache_files: Vec<CacheFile> = data.files.iter().map(|file| {
-            CacheFile {
-                id: file.id.clone(),
-                name: file.name.clone(),
-                web_view_link: file.web_view_link.clone(),
-                mime_type: file.mime_type.clone(),
-                parents: file.parents.clone(),
-                parent_folder_name: file.parent_folder_name.clone(),
-                keywords: file.keywords.clone(),
-                romaji_keywords: file.romaji_keywords.clone(),
-            }
-        }).collect();
-
-        let cache_data = serde_json::json!({
-            "files": cache_files,
-            "last_updated": data.last_sync.to_rfc3339()
-        });
-
-        fs::write(&self.cache_path, serde_json::to_string_pretty(&cache_data)?)?;
-        println!("キャッシュファイルを更新しました");
-        Ok(())
-    }
 }
