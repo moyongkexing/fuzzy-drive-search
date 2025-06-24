@@ -1,4 +1,4 @@
-use crate::domain::entities::{DriveFile, SearchResult};
+use crate::models::{DriveFile, SearchResult};
 
 pub struct FuzzySearchEngine {
     threshold: f64,

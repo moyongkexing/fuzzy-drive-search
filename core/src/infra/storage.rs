@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-use crate::domain::entities::DriveFile;
+use crate::models::DriveFile;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JsonStorageFile {

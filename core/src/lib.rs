@@ -1,6 +1,6 @@
-pub mod domain;
-pub mod application;
-pub mod infrastructure;
+pub mod models;
+pub mod services;
+pub mod infra;
 
-pub use domain::*;
-pub use application::*;
+pub use models::*;
+pub use services::*;

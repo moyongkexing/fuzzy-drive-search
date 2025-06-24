@@ -1,4 +1,4 @@
-use fuzzy_drive_search_core::application::search_service::SearchService;
+use fuzzy_drive_search_core::services::SearchService;
 use serde_json;
 use std::env;
 
