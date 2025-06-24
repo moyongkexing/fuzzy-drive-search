@@ -84,9 +84,6 @@ impl ConfigManager {
         Ok(())
     }
 
-    pub fn get_database_path(&self) -> PathBuf {
-        self.config_dir.join("search_index.db")
-    }
 
     pub fn get_cache_path(&self) -> PathBuf {
         self.config_dir.join("files_cache.json")
