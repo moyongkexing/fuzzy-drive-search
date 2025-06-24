@@ -15,7 +15,7 @@ export default function InitForm() {
 
   const handleSubmit = async (values: FormValues) => {
     setIsLoading(true);
-    
+
     try {
       showToast({
         style: Toast.Style.Animated,
@@ -26,7 +26,7 @@ export default function InitForm() {
       // コマンドライン引数として設定値を渡す
       const escapedClientId = values.clientId.replace(/'/g, "'\"'\"'");
       const escapedClientSecret = values.clientSecret.replace(/'/g, "'\"'\"'");
-      
+
       execSync(`${binaryPath} init --client-id='${escapedClientId}' --client-secret='${escapedClientSecret}'`, {
         encoding: "utf8",
         timeout: 60_000,
@@ -65,7 +65,7 @@ export default function InitForm() {
         placeholder="Google OAuth2 Client ID"
         info="Google Cloud ConsoleのOAuth 2.0クライアントIDから取得"
       />
-      
+
       <Form.PasswordField
         id="clientSecret"
         title="Client Secret"

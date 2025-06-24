@@ -12,7 +12,7 @@ export default function SyncForm() {
   const [folderUrls, setFolderUrls] = useState<FolderUrl[]>([]);
   const [initialized, setInitialized] = useState(false);
   const { syncFiles } = useSync();
-  const { folderUrls: existingUrls, folderInfos, isLoading } = useConfig();
+  const { folderInfos, isLoading } = useConfig();
 
   // 既存の設定を初期値として設定（一度だけ実行）
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function SyncForm() {
       if (folderInfos.length > 0) {
         const initialUrls = folderInfos.map((info, index) => ({
           id: (index + 1).toString(),
-          url: info.url
+          url: info.url,
         }));
         // 最低1つは空の入力欄を確保
         if (initialUrls.length < 10) {
@@ -42,16 +42,8 @@ export default function SyncForm() {
     }
   };
 
-  const removeFolderUrl = (id: string) => {
-    if (folderUrls.length > 1) {
-      setFolderUrls(folderUrls.filter(folder => folder.id !== id));
-    }
-  };
-
   const updateFolderUrl = (id: string, url: string) => {
-    setFolderUrls(folderUrls.map(folder => 
-      folder.id === id ? { ...folder, url } : folder
-    ));
+    setFolderUrls(folderUrls.map((folder) => (folder.id === id ? { ...folder, url } : folder)));
   };
 
   const extractFolderIdFromUrl = (url: string): string | null => {
@@ -60,8 +52,8 @@ export default function SyncForm() {
   };
 
   const handleSubmit = async () => {
-    const validUrls = folderUrls.filter(folder => folder.url.trim());
-    
+    const validUrls = folderUrls.filter((folder) => folder.url.trim());
+
     if (validUrls.length === 0) {
       await showToast({
         style: Toast.Style.Failure,
@@ -121,22 +113,16 @@ export default function SyncForm() {
       actions={
         <ActionPanel>
           <Action.SubmitForm title="同期を実行" onSubmit={handleSubmit} />
-          {folderUrls.length < 10 && (
-            <Action title="フォルダを追加" onAction={addFolderUrl} />
-          )}
+          {folderUrls.length < 10 && <Action title="フォルダを追加" onAction={addFolderUrl} />}
         </ActionPanel>
       }
     >
-      <Form.Description text={`Google Driveのフォルダを同期します。フォルダのURLを入力してください。最大10個まで設定できます。${folderInfos.length > 0 ? '\n\n現在の設定が初期値として表示されています。' : ''}`} />
-      
-      {folderInfos.length > 0 && (
-        <Form.Description text={`現在登録されているフォルダ:\n${folderInfos.map(info => `・ ${info.name}`).join('\n')}`} />
-      )}
-      
+      <Form.Description text="Google Driveのフォルダを同期します。フォルダのURLを入力してください。最大10個まで設定できます。" />
+
       {folderUrls.map((folder, index) => {
         const folderInfo = folderInfos[index];
         const title = folderInfo?.name || `フォルダ ${index + 1}`;
-        
+
         return (
           <Form.TextField
             key={folder.id}
@@ -153,14 +139,16 @@ export default function SyncForm() {
       {folderUrls.length > 1 && (
         <Form.Description text="不要なフォルダを削除するには、URLを空にして同期を実行してください。" />
       )}
-      
+
       <Form.Separator />
-      
-      <Form.Description text="使用方法:
+
+      <Form.Description
+        text="使用方法:
 1. Google DriveでフォルダのURLをコピー
 2. 上記の入力欄に貼り付け
 3. 複数のフォルダを追加する場合は「フォルダを追加」ボタンを使用
-4. 「同期を実行」でファイル一覧を更新" />
+4. 「同期を実行」でファイル一覧を更新"
+      />
     </Form>
   );
 }

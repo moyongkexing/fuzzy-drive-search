@@ -49,7 +49,7 @@ export default function AuthForm() {
       }
     >
       <Form.Description text="Google Drive APIの認証情報を入力してください。Google Cloud Consoleで取得したOAuth 2.0クライアントIDとシークレットを使用します。" />
-      
+
       <Form.TextField
         id="clientId"
         title="Client ID"
@@ -58,7 +58,7 @@ export default function AuthForm() {
         onChange={setClientId}
         info="Google Cloud ConsoleのOAuth 2.0クライアントIDです"
       />
-      
+
       <Form.TextField
         id="clientSecret"
         title="Client Secret"
@@ -67,14 +67,16 @@ export default function AuthForm() {
         onChange={setClientSecret}
         info="Google Cloud ConsoleのOAuth 2.0クライアントシークレットです"
       />
-      
+
       <Form.Separator />
-      
-      <Form.Description text="設定手順:
+
+      <Form.Description
+        text="設定手順:
 1. Google Cloud Consoleでプロジェクトを作成
 2. Google Drive APIを有効化
 3. OAuth 2.0クライアントIDを作成
-4. 上記の情報を入力して認証を実行" />
+4. 上記の情報を入力して認証を実行"
+      />
     </Form>
   );
 }

@@ -5,7 +5,6 @@
   "description": "Google Driveのファイルを曖昧検索",
   "icon": "assets/extension-icon.png",
   "author": "kexing_moyong",
-  "owner": "moyongkexing",
   "license": "MIT",
   "commands": [
     {

@@ -8,14 +8,14 @@ import { useSync } from "./hooks/useSync";
 const getIconForMimeType = (filename: string, mimeType?: string) => {
   // MIME typeがある場合は優先的に使用
   if (mimeType) {
-    if (mimeType.includes('spreadsheet')) return Icon.BarChart;
-    if (mimeType.includes('presentation')) return Icon.Monitor;
-    if (mimeType.includes('document')) return Icon.Text;
-    if (mimeType.includes('folder')) return Icon.Folder;
-    if (mimeType.includes('image')) return Icon.Image;
-    if (mimeType === 'application/pdf') return Icon.Document;
+    if (mimeType.includes("spreadsheet")) return Icon.BarChart;
+    if (mimeType.includes("presentation")) return Icon.Monitor;
+    if (mimeType.includes("document")) return Icon.Text;
+    if (mimeType.includes("folder")) return Icon.Folder;
+    if (mimeType.includes("image")) return Icon.Image;
+    if (mimeType === "application/pdf") return Icon.Document;
   }
-  
+
   // 拡張子による判定（フォールバック）
   const ext = filename.split(".").pop()?.toLowerCase() || "";
   const iconMap: Record<string, Icon> = {

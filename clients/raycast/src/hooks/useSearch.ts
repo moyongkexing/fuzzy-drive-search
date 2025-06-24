@@ -41,7 +41,6 @@ export function useSearch() {
       clearTimeout(timeoutRef.current);
     }
 
-    
     timeoutRef.current = setTimeout(() => {
       performSearch(searchText);
     }, 0); // 即座に検索（デバウンスなし）
