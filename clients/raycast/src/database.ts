@@ -49,6 +49,7 @@ export function fuzzySearchFiles(query: string): Array<{
   arg: string;
   uid: string;
   valid: boolean;
+  mimeType?: string;
 }> {
   if (!query.trim()) return [];
   
@@ -96,5 +97,6 @@ export function fuzzySearchFiles(query: string): Array<{
     arg: file.web_view_link,
     uid: file.id,
     valid: true,
+    mimeType: file.mime_type,
   }));
 }

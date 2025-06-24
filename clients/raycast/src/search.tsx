@@ -1,10 +1,22 @@
 import { ActionPanel, Action, Icon, List } from "@raycast/api";
-import InitForm from "./init-form";
+import AuthForm from "./auth-form";
+import SyncForm from "./sync-form";
 import { useSearch } from "./hooks/useSearch";
 import { useInitialization } from "./hooks/useInitialization";
 import { useSync } from "./hooks/useSync";
 
-const getIconForMimeType = (filename: string) => {
+const getIconForMimeType = (filename: string, mimeType?: string) => {
+  // MIME typeがある場合は優先的に使用
+  if (mimeType) {
+    if (mimeType.includes('spreadsheet')) return Icon.BarChart;
+    if (mimeType.includes('presentation')) return Icon.Monitor;
+    if (mimeType.includes('document')) return Icon.Text;
+    if (mimeType.includes('folder')) return Icon.Folder;
+    if (mimeType.includes('image')) return Icon.Image;
+    if (mimeType === 'application/pdf') return Icon.Document;
+  }
+  
+  // 拡張子による判定（フォールバック）
   const ext = filename.split(".").pop()?.toLowerCase() || "";
   const iconMap: Record<string, Icon> = {
     pdf: Icon.Document,
@@ -17,6 +29,7 @@ const getIconForMimeType = (filename: string) => {
     png: Icon.Image,
     jpg: Icon.Image,
     jpeg: Icon.Image,
+    gif: Icon.Image,
     txt: Icon.Text,
   };
   return iconMap[ext] || Icon.Document;
@@ -43,12 +56,12 @@ export default function Command() {
       {results.length === 0 && searchText.trim() === "" ? (
         <List.Section title="操作">
           <List.Item
-            title="初期設定"
-            subtitle="Google Drive認証と初回同期を実行"
-            icon={Icon.Gear}
+            title="認証設定"
+            subtitle="Google Drive APIの認証情報を設定"
+            icon={Icon.Key}
             actions={
               <ActionPanel>
-                <Action.Push title="初期設定フォームを開く" icon={Icon.Gear} target={<InitForm />} />
+                <Action.Push title="認証設定フォームを開く" icon={Icon.Key} target={<AuthForm />} />
                 <Action
                   title="既存の設定で初期化"
                   icon={Icon.ArrowClockwise}
@@ -60,11 +73,12 @@ export default function Command() {
           />
           <List.Item
             title="手動同期"
-            subtitle="Google Driveのファイル一覧を強制更新"
-            icon={Icon.RotateClockwise}
+            subtitle="Google Driveフォルダを指定して同期"
+            icon={Icon.Folder}
             actions={
               <ActionPanel>
-                <Action title="同期を実行" icon={Icon.RotateClockwise} onAction={handleSync} />
+                <Action.Push title="同期フォームを開く" icon={Icon.FolderOpen} target={<SyncForm />} />
+                <Action title="簡易同期" icon={Icon.RotateClockwise} onAction={handleSync} />
               </ActionPanel>
             }
           />
@@ -75,8 +89,8 @@ export default function Command() {
             <List.Item
               key={item.uid}
               title={item.title}
-              subtitle={item.subtitle}
-              icon={getIconForMimeType(item.title)}
+              subtitle={`📁 ${item.subtitle}`}
+              icon={getIconForMimeType(item.title, item.mimeType)}
               actions={
                 <ActionPanel>
                   <Action.OpenInBrowser title="ブラウザで開く" icon={Icon.Globe} url={item.arg} />

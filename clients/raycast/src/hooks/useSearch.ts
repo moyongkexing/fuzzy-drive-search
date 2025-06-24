@@ -7,6 +7,7 @@ interface SearchResult {
   arg: string;
   uid: string;
   valid: boolean;
+  mimeType?: string;
 }
 
 export function useSearch() {
