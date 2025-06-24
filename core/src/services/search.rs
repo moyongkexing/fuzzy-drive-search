@@ -1,8 +1,6 @@
 use anyhow::Result;
 use chrono::{Duration, Utc};
 
-use crate::models::SearchResult;
-use crate::services::FuzzySearchEngine;
 use crate::infra::{
     ConfigManager, JsonStorage, GoogleDriveClient, OAuth2Client,
 };
@@ -10,7 +8,6 @@ use crate::infra::{
 pub struct SearchService {
     config_manager: ConfigManager,
     json_storage: JsonStorage,
-    fuzzy_engine: FuzzySearchEngine,
 }
 
 impl SearchService {
@@ -21,12 +18,9 @@ impl SearchService {
         let storage_path = config_manager.config_dir.join("drive_files.json");
         let json_storage = JsonStorage::new(storage_path)?;
         
-        let fuzzy_engine = FuzzySearchEngine::new(0.3); // 閾値30%
-
         Ok(Self {
             config_manager,
             json_storage,
-            fuzzy_engine,
         })
     }
 
@@ -143,13 +137,6 @@ impl SearchService {
         Ok(())
     }
 
-    pub fn search(&self, query: &str) -> Result<Vec<SearchResult>> {
-        let files = self.json_storage.get_files()?;
-        let results = self.fuzzy_engine.search(query, &files);
-        
-        println!("検索「{}」: {}件の結果", query, results.len());
-        Ok(results)
-    }
 
     pub fn get_folder_names(&self) -> Result<std::collections::HashMap<String, String>> {
         self.json_storage.get_folder_names()

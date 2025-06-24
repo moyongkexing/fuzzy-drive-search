@@ -61,6 +61,7 @@ export function useSearch() {
     };
   }, []);
 
+
   return {
     searchText,
     setSearchText,

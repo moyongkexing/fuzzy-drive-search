@@ -63,30 +63,54 @@ export function fuzzySearchFiles(query: string): Array<{
     loadCacheFromJson();
   }
 
-  // シンプルなファジー検索を実装
+  // スペース分割によるAND検索をサポート
   const queryLower = query.toLowerCase();
+  const words = queryLower.split(/\s+/).filter(word => word.length > 0);
+  const isMultiWord = words.length > 1;
+
   const results = cachedFiles.filter((file) => {
-    // ファイル名での検索
-    if (file.name.toLowerCase().includes(queryLower)) {
-      return true;
+    if (isMultiWord) {
+      // 複数単語の場合：すべての単語が含まれているかチェック
+      return words.every((word) => {
+        const fileName = file.name.toLowerCase();
+        const inFileName = fileName.includes(word);
+        const inKeywords = file.keywords?.some((keyword) => keyword.toLowerCase().includes(word)) || false;
+        const inRomaji = file.romaji_keywords?.some((romaji) => romaji.toLowerCase().includes(word)) || false;
+        
+        return inFileName || inKeywords || inRomaji;
+      });
+    } else {
+      // 単一単語の場合：従来の方法
+      const fileName = file.name.toLowerCase();
+      if (fileName.includes(queryLower)) {
+        return true;
+      }
+      // キーワードでの検索
+      if (file.keywords?.some((keyword) => keyword.toLowerCase().includes(queryLower))) {
+        return true;
+      }
+      // ローマ字キーワードでの検索
+      if (file.romaji_keywords?.some((romaji) => romaji.toLowerCase().includes(queryLower))) {
+        return true;
+      }
+      return false;
     }
-    // キーワードでの検索
-    if (file.keywords?.some((keyword) => keyword.toLowerCase().includes(queryLower))) {
-      return true;
-    }
-    // ローマ字キーワードでの検索
-    if (file.romaji_keywords?.some((romaji) => romaji.toLowerCase().includes(queryLower))) {
-      return true;
-    }
-    return false;
   });
 
-  // 関連度でソート（ファイル名に含まれる場合を優先）
+  // 関連度でソート（複数単語の場合も考慮）
   results.sort((a, b) => {
-    const aInName = a.name.toLowerCase().includes(queryLower);
-    const bInName = b.name.toLowerCase().includes(queryLower);
-    if (aInName && !bInName) return -1;
-    if (!aInName && bInName) return 1;
+    if (isMultiWord) {
+      // 複数単語の場合：より多くの単語がファイル名に含まれる方を優先
+      const aScore = words.filter(word => a.name.toLowerCase().includes(word)).length;
+      const bScore = words.filter(word => b.name.toLowerCase().includes(word)).length;
+      if (aScore !== bScore) return bScore - aScore;
+    } else {
+      // 単一単語の場合：ファイル名に含まれる場合を優先
+      const aInName = a.name.toLowerCase().includes(queryLower);
+      const bInName = b.name.toLowerCase().includes(queryLower);
+      if (aInName && !bInName) return -1;
+      if (!aInName && bInName) return 1;
+    }
     return 0;
   });
 

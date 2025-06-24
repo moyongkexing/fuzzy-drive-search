@@ -18,14 +18,6 @@ async fn main() -> anyhow::Result<()> {
         "init" => {
             handle_init(&args[2..]).await?;
         }
-        "search" => {
-            if args.len() < 3 {
-                eprintln!("エラー: 検索クエリが必要です");
-                return Ok(());
-            }
-            let query = &args[2];
-            handle_search(query).await?;
-        }
         "sync" => {
             handle_sync().await?;
         }
@@ -44,17 +36,12 @@ fn print_help() {
     let help_items = vec![
         serde_json::json!({
             "title": "Fuzzy Drive Search - ヘルプ",
-            "subtitle": "使用方法: fuzzy-drive-search [init|search|sync] [検索クエリ]",
+            "subtitle": "使用方法: fuzzy-drive-search [init|sync]",
             "valid": false
         }),
         serde_json::json!({
             "title": "init - 初期設定",
             "subtitle": "Google Drive認証と初回同期を実行します",
-            "valid": false
-        }),
-        serde_json::json!({
-            "title": "search <クエリ> - ファイル検索",
-            "subtitle": "指定したクエリで複数フォルダの直下ファイルを曖昧検索します",
             "valid": false
         }),
         serde_json::json!({
@@ -120,36 +107,6 @@ fn parse_auth_args(args: &[String]) -> anyhow::Result<(Option<String>, Option<St
     Ok((client_id, client_secret))
 }
 
-async fn handle_search(query: &str) -> anyhow::Result<()> {
-    let service = SearchService::new()?;
-    
-    let results = service.search(query)?;
-    let folder_names = service.get_folder_names().unwrap_or_default();
-    
-    // Raycast形式でJSON出力
-    let items: Vec<serde_json::Value> = results.into_iter().map(|result| {
-        // 親フォルダ名を取得（複数の場合は最初のもの）
-        let parent_folder_name = result.file.parents.first()
-            .and_then(|parent_id| folder_names.get(parent_id))
-            .cloned()
-            .unwrap_or_else(|| "不明なフォルダ".to_string());
-        
-        serde_json::json!({
-            "title": result.file.name,
-            "subtitle": parent_folder_name,
-            "arg": result.file.web_view_link,
-            "uid": result.file.id,
-            "valid": true
-        })
-    }).collect();
-    
-    let output = serde_json::json!({
-        "items": items
-    });
-    
-    println!("{}", serde_json::to_string(&output)?);
-    Ok(())
-}
 
 async fn handle_sync() -> anyhow::Result<()> {
     let mut service = SearchService::new()?;

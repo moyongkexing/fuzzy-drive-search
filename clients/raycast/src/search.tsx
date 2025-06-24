@@ -2,8 +2,6 @@ import { ActionPanel, Action, Icon, List } from "@raycast/api";
 import AuthForm from "./auth-form";
 import SyncForm from "./sync-form";
 import { useSearch } from "./hooks/useSearch";
-import { useInitialization } from "./hooks/useInitialization";
-import { useSync } from "./hooks/useSync";
 
 const getIconForMimeType = (filename: string, mimeType?: string) => {
   // MIME typeがある場合は優先的に使用
@@ -36,18 +34,12 @@ const getIconForMimeType = (filename: string, mimeType?: string) => {
 };
 
 export default function Command() {
-  const { searchText, setSearchText, results, isLoading, refreshSearch } = useSearch();
-  const { initialize } = useInitialization();
-  const { syncFiles } = useSync();
-
-  const handleSync = () => {
-    syncFiles(refreshSearch);
-  };
+  const { searchText, setSearchText, results, isLoading,  } = useSearch();
 
   return (
     <List
       isLoading={isLoading}
-      searchBarPlaceholder="Google Drive内のファイルを検索..."
+      searchBarPlaceholder="Google Drive内のファイルを検索... (Enterで高度な曖昧検索)"
       searchText={searchText}
       onSearchTextChange={setSearchText}
       throttle={false}
@@ -62,12 +54,6 @@ export default function Command() {
             actions={
               <ActionPanel>
                 <Action.Push title="認証設定フォームを開く" icon={Icon.Key} target={<AuthForm />} />
-                <Action
-                  title="既存の設定で初期化"
-                  icon={Icon.ArrowClockwise}
-                  onAction={initialize}
-                  shortcut={{ modifiers: ["cmd"], key: "i" }}
-                />
               </ActionPanel>
             }
           />
@@ -78,7 +64,6 @@ export default function Command() {
             actions={
               <ActionPanel>
                 <Action.Push title="同期フォームを開く" icon={Icon.Folder} target={<SyncForm />} />
-                <Action title="簡易同期" icon={Icon.RotateClockwise} onAction={handleSync} />
               </ActionPanel>
             }
           />
@@ -95,12 +80,6 @@ export default function Command() {
                 <ActionPanel>
                   <Action.OpenInBrowser title="ブラウザで開く" icon={Icon.Globe} url={item.arg} />
                   <Action.CopyToClipboard title="URLをコピー" icon={Icon.Clipboard} content={item.arg} />
-                  <Action
-                    title="手動同期"
-                    icon={Icon.RotateClockwise}
-                    onAction={handleSync}
-                    shortcut={{ modifiers: ["cmd"], key: "r" }}
-                  />
                 </ActionPanel>
               }
             />
