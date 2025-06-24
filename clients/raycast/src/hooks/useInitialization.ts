@@ -1,4 +1,4 @@
-import { showToast, Toast } from "@raycast/api";
+import { showToast, Toast, environment, LaunchType } from "@raycast/api";
 import { execSync } from "child_process";
 import { join } from "path";
 
@@ -22,26 +22,34 @@ const executeCommandAsync = async (command: string, options: { timeout?: number 
 
 export function useInitialization() {
   const initialize = async () => {
+    const isBackground = environment.launchType === LaunchType.Background;
+    
     try {
-      showToast({
-        style: Toast.Style.Animated,
-        title: "初期化中...",
-        message: "Google Drive認証を開始します",
-      });
+      if (!isBackground) {
+        showToast({
+          style: Toast.Style.Animated,
+          title: "初期化中...",
+          message: "Google Drive認証を開始します",
+        });
+      }
 
       await executeCommandAsync("init", { timeout: 60_000 });
 
-      showToast({
-        style: Toast.Style.Success,
-        title: "初期化完了",
-        message: "Google Drive認証が完了しました",
-      });
+      if (!isBackground) {
+        showToast({
+          style: Toast.Style.Success,
+          title: "初期化完了",
+          message: "Google Drive認証が完了しました",
+        });
+      }
     } catch (error) {
-      showToast({
-        style: Toast.Style.Failure,
-        title: "初期化エラー",
-        message: error instanceof Error ? error.message : "初期化に失敗しました",
-      });
+      if (!isBackground) {
+        showToast({
+          style: Toast.Style.Failure,
+          title: "初期化エラー",
+          message: error instanceof Error ? error.message : "初期化に失敗しました",
+        });
+      }
     }
   };
 
